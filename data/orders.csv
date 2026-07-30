@@ -1,0 +1,3 @@
+id,user_id,name,email,phone,address,city,state,postal_code,country,total,payment_method,payment_details,status,created_at
+1,1,Pollawit Kongsiri,admin@mockkicks.com,0659585436,200/12,Kanchanaburi,Kanchanaburi,71000,Thailand,142,promptpay,"{""stripe_payment_intent_id"":""""}",paid,2026-07-30T03:02:53.100Z
+2,1,Pollawit Kongsiri,admin@mockkicks.com,0659585436,200/12,Kanchanaburi,Kanchanaburi,71000,Thailand,94,promptpay,"{""stripe_payment_intent_id"":""""}",paid,2026-07-30T03:04:26.589Z
