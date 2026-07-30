@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
     if (!data.checkout_ref || !data.user_id || !data.order_data) {
       return NextResponse.json({ error: 'checkout_ref, user_id, and order_data are required.' }, { status: 400 })
     }
-    const pending = readCSV<any>('pending_checkouts')
+    const pending = await readCSV<any>('pending_checkouts')
     const existing = pending.find((p: any) => p.checkout_ref === data.checkout_ref)
     if (existing) {
-      update('pending_checkouts', Number(existing.id), { data: JSON.stringify(data.order_data) })
+      await update('pending_checkouts', Number(existing.id), { data: JSON.stringify(data.order_data) })
     } else {
-      insert('pending_checkouts', { id: String(nextId('pending_checkouts')), checkout_ref: data.checkout_ref, user_id: String(data.user_id), payment_intent_id: '', data: JSON.stringify(data.order_data), created_at: new Date().toISOString() })
+      await insert('pending_checkouts', { id: String(await nextId('pending_checkouts')), checkout_ref: data.checkout_ref, user_id: String(data.user_id), payment_intent_id: '', data: JSON.stringify(data.order_data), created_at: new Date().toISOString() })
     }
     return NextResponse.json({ message: 'Saved.' })
   }
@@ -23,15 +23,15 @@ export async function POST(req: NextRequest) {
     if (!data.checkout_ref || !data.payment_intent_id) {
       return NextResponse.json({ error: 'checkout_ref and payment_intent_id required.' }, { status: 400 })
     }
-    const pending = readCSV<any>('pending_checkouts')
+    const pending = await readCSV<any>('pending_checkouts')
     const p = pending.find((p: any) => p.checkout_ref === data.checkout_ref)
-    if (p) update('pending_checkouts', Number(p.id), { payment_intent_id: data.payment_intent_id })
+    if (p) await update('pending_checkouts', Number(p.id), { payment_intent_id: data.payment_intent_id })
     return NextResponse.json({ message: 'Updated.' })
   }
 
   if (data.action === 'finalize') {
     if (!data.checkout_ref) return NextResponse.json({ error: 'checkout_ref required.' }, { status: 400 })
-    const pending = readCSV<any>('pending_checkouts')
+    const pending = await readCSV<any>('pending_checkouts')
     const p = pending.find((p: any) => p.checkout_ref === data.checkout_ref)
     if (!p) return NextResponse.json({ message: 'Order already processed.', already_processed: true })
 
@@ -40,10 +40,10 @@ export async function POST(req: NextRequest) {
     for (const item of orderData.items) total += Number(item.price) * Number(item.quantity)
 
     const paymentMethod = data.wallet_type || data.payment_method_type || 'card'
-    const orderId = nextId('orders')
+    const orderId = await nextId('orders')
     const now = new Date().toISOString()
 
-    insert('orders', {
+    await insert('orders', {
       id: String(orderId), user_id: p.user_id,
       name: orderData.name, email: orderData.email, phone: orderData.phone,
       address: orderData.address, city: orderData.city, state: orderData.state,
@@ -54,15 +54,15 @@ export async function POST(req: NextRequest) {
     })
 
     for (const item of orderData.items) {
-      insert('order_items', {
-        id: String(nextId('order_items')), order_id: String(orderId),
+      await insert('order_items', {
+        id: String(await nextId('order_items')), order_id: String(orderId),
         sneaker_id: String(item.sneaker_id), name: item.name,
         price: String(item.price), quantity: String(item.quantity)
       })
     }
 
-    remove('cart', (c: any) => Number(c.user_id) === Number(p.user_id))
-    remove('pending_checkouts', (pc: any) => Number(pc.id) === Number(p.id))
+    await remove('cart', (c: any) => Number(c.user_id) === Number(p.user_id))
+    await remove('pending_checkouts', (pc: any) => Number(pc.id) === Number(p.id))
 
     try {
       const { sendOrderNotification } = await import('@/lib/mail')
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
   const ref = searchParams.get('checkout_ref')
   const pi = searchParams.get('payment_intent_id')
   if (!ref && !pi) return NextResponse.json({ error: 'checkout_ref or payment_intent_id required.' }, { status: 400 })
-  const pending = readCSV<any>('pending_checkouts')
+  const pending = await readCSV<any>('pending_checkouts')
   const p = ref ? pending.find((p: any) => p.checkout_ref === ref) : pending.find((p: any) => p.payment_intent_id === pi)
   if (!p) return NextResponse.json({ error: 'Not found.' }, { status: 404 })
   return NextResponse.json({ checkout_ref: p.checkout_ref, user_id: Number(p.user_id), payment_intent_id: p.payment_intent_id, order_data: JSON.parse(p.data) })
@@ -89,6 +89,6 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const data = await req.json()
   if (!data?.checkout_ref) return NextResponse.json({ error: 'checkout_ref required.' }, { status: 400 })
-  remove('pending_checkouts', (p: any) => p.checkout_ref === data.checkout_ref)
+  await remove('pending_checkouts', (p: any) => p.checkout_ref === data.checkout_ref)
   return NextResponse.json({ message: 'Deleted.' })
 }

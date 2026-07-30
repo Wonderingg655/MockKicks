@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     if (!data?.username || !data?.password) {
       return NextResponse.json({ error: 'Username and password are required.' }, { status: 400 })
     }
-    const users = readCSV<any>('users')
+    const users = await readCSV<any>('users')
     const user = users.find((u: any) => u.username === data.username.trim())
     if (user && await bcrypt.compare(data.password, user.password)) {
       return NextResponse.json({

@@ -3,8 +3,8 @@ import { readCSV } from '@/lib/csv'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const orders = readCSV<any>('orders').sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  const users = readCSV<any>('users')
+  const orders = (await readCSV<any>('orders')).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  const users = await readCSV<any>('users')
 
   if (searchParams.has('id')) {
     const orderId = searchParams.get('id')
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const u = users.find((u: any) => Number(u.id) === Number(order.user_id))
     order.username = u?.username || ''
     order.total = Number(order.total)
-    const items = readCSV<any>('order_items').filter((i: any) => Number(i.order_id) === Number(orderId))
+    const items = (await readCSV<any>('order_items')).filter((i: any) => Number(i.order_id) === Number(orderId))
     order.items = items.map((i: any) => ({ id: Number(i.id), sneaker_id: Number(i.sneaker_id), name: i.name, price: Number(i.price), quantity: Number(i.quantity) }))
     return NextResponse.json(order)
   }
