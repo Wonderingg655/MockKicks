@@ -4,12 +4,13 @@ import { readCSV, insert, update, remove, nextId } from '@/lib/csv'
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const userId = searchParams.get('user_id')
+  const lang = searchParams.get('lang') || 'en'
   if (!userId) return NextResponse.json({ error: 'Missing user_id.' }, { status: 400 })
   const cart = (await readCSV<any>('cart')).filter((c: any) => Number(c.user_id) === Number(userId))
   const sneakers = await readCSV<any>('sneakers')
   const items = cart.map(c => {
     const s = sneakers.find((s: any) => Number(s.id) === Number(c.sneaker_id))
-    return s ? { id: Number(c.id), sneaker_id: Number(c.sneaker_id), quantity: Number(c.quantity), name: s.name, price: Number(s.price), image: s.image, category: s.category } : null
+    return s ? { id: Number(c.id), sneaker_id: Number(c.sneaker_id), quantity: Number(c.quantity), name: s.name, price: Number(s.price), image: s.image, category: s[`category_${lang}`] || s.category } : null
   }).filter(Boolean)
   return NextResponse.json(items)
 }

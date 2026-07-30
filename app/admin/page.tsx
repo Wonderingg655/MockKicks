@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, Fragment } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../context/LanguageContext'
 import Link from 'next/link'
 
 interface UserRow {
@@ -26,7 +27,8 @@ type Tab = 'users' | 'sneakers' | 'orders'
 type ModalMode = 'add' | 'edit' | null
 
 export default function AdminPage() {
-  const { user, loading, logout } = useAuth()
+  const { user, loading } = useAuth()
+  const { t, fontClass } = useLang()
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('users')
 
@@ -45,8 +47,6 @@ export default function AdminPage() {
   const [modal, setModal] = useState<ModalMode>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
   const [error, setError] = useState('')
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const [userForm, setUserForm] = useState({ username: '', email: '', password: '', role: 0 })
   const [sneakerForm, setSneakerForm] = useState({ name: '', price: 0, image: '/sneakplaceholder.png', description: '', category: '' })
@@ -95,16 +95,6 @@ export default function AdminPage() {
     else if (tab === 'sneakers') fetchSneakers()
     else fetchOrders()
   }, [user, loading, tab])
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
 
   const openAdd = () => {
     setUserForm({ username: '', email: '', password: '', role: 0 })
@@ -165,45 +155,30 @@ export default function AdminPage() {
   if (!user || user.role !== 1) return null
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
-        <Link href="/" className="text-lg font-bold text-gray-700 tracking-widest shrink-0">Mock•Kicks</Link>
-        <div className="flex items-center gap-2 sm:gap-4 text-sm">
-          <Link href="/" className="text-gray-500 hover:text-gray-900 transition-colors hidden sm:inline">Home</Link>
-          <div className="relative" ref={userMenuRef}>
-            <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="text-gray-500 flex items-center gap-1.5 hover:text-gray-900 transition-colors cursor-pointer">{user.username}<span className="text-xs font-semibold text-white bg-gray-800 px-2 py-0.5 rounded-full">Admin</span><svg className={`w-4 h-4 ml-0.5 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></button>
-            {userMenuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-2 animate-fade-in">
-                <button onClick={() => { setUserMenuOpen(false); logout(); router.push('/') }} className="w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">Sign Out</button>
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
-
+    <div>
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-400 mt-1">{tab === 'users' ? 'Manage all registered users' : tab === 'sneakers' ? 'Manage all items' : 'View all orders'}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('dashboard')}</h1>
+            <p className="text-sm text-gray-400 mt-1">{tab === 'users' ? t('manageUsers') : tab === 'sneakers' ? t('manageItems') : t('viewOrders')}</p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <div className="flex bg-gray-100 rounded-full p-1">
-              <button onClick={() => { setTab('users'); setFetching(true) }} className={`px-3 sm:px-4 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer ${tab === 'users' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Users</button>
-              <button onClick={() => { setTab('sneakers'); setFetching(true) }} className={`px-3 sm:px-4 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer ${tab === 'sneakers' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Items</button>
-              <button onClick={() => { setTab('orders'); setFetching(true); setExpandedOrder(null) }} className={`px-3 sm:px-4 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer ${tab === 'orders' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Orders</button>
+              <button onClick={() => { setTab('users'); setFetching(true) }} className={`px-3 sm:px-4 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer ${tab === 'users' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('users')}</button>
+              <button onClick={() => { setTab('sneakers'); setFetching(true) }} className={`px-3 sm:px-4 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer ${tab === 'sneakers' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('sneakers')}</button>
+              <button onClick={() => { setTab('orders'); setFetching(true); setExpandedOrder(null) }} className={`px-3 sm:px-4 py-1.5 text-sm font-medium rounded-full transition-colors cursor-pointer ${tab === 'orders' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>{t('orders')}</button>
             </div>
             {tab !== 'orders' && <button onClick={openAdd} className="flex items-center gap-1.5 px-4 sm:px-5 py-2.5 text-sm font-semibold text-white bg-gray-900 rounded-full hover:bg-gray-800 transition-colors cursor-pointer">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              <span className="hidden sm:inline">Add {tab === 'users' ? 'User' : 'Item'}</span>
-              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">{t('add')} {tab === 'users' ? t('user') : t('item')}</span>
+              <span className="sm:hidden">{t('add')}</span>
             </button>}
           </div>
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
           {fetching ? (
-            <div className="p-6 text-sm text-gray-400">Loading...</div>
+            <div className="p-6 text-sm text-gray-400">{t('loading')}</div>
           ) : tab === 'users' ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -369,38 +344,11 @@ export default function AdminPage() {
         </div>
       </main>
 
-      <footer className="border-t border-gray-100 bg-gray-50 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
-            <div>
-              <Link href="/" className="text-xl font-bold text-gray-700 tracking-widest">Mock•Kicks</Link>
-              <p className="mt-3 text-sm text-gray-400 leading-relaxed">Premium sneakers for every stride. Built for comfort, designed for life.</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Navigate</h4>
-              <div className="mt-4 flex flex-col gap-2.5">
-                <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Home</Link>
-                <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Shop</Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Account</h4>
-              <div className="mt-4 flex flex-col gap-2.5">
-                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Sign In</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 py-6">
-          <p className="text-xs text-gray-400 text-center max-w-md mx-auto leading-relaxed">This is a mock e-commerce site project meant for experimental and learning only.</p>
-        </div>
-      </footer>
-
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4" onClick={() => setModal(null)}>
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
           <div className="relative bg-white rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl animate-scale-in max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">{modal === 'add' ? 'Add' : 'Edit'} {tab === 'users' ? 'User' : 'Item'}</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{modal === 'add' ? t('add') : t('edit')} {tab === 'users' ? t('user') : t('item')}</h2>
             <form onSubmit={(e) => { e.preventDefault(); handleSave() }} className="flex flex-col gap-4">
               {tab === 'users' ? (
                 <>
@@ -443,8 +391,8 @@ export default function AdminPage() {
               )}
               {error && <p className="text-sm text-red-600 text-center">{error}</p>}
               <div className="flex gap-3 mt-2">
-                <button type="submit" className="flex-1 py-3 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors cursor-pointer">Save</button>
-                <button type="button" onClick={() => { setModal(null); setError('') }} className="flex-1 py-3 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" className="flex-1 py-3 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors cursor-pointer">{t('save')}</button>
+                <button type="button" onClick={() => { setModal(null); setError('') }} className="flex-1 py-3 text-sm font-medium text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">{t('cancel')}</button>
               </div>
             </form>
           </div>

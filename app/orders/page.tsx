@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '../context/AuthContext'
+import { useLang } from '../context/LanguageContext'
 
 interface Order {
   id: number
@@ -15,6 +16,7 @@ interface Order {
 
 export default function OrdersPage() {
   const { user, loading } = useAuth()
+  const { t, fontClass } = useLang()
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [fetching, setFetching] = useState(true)
@@ -33,26 +35,21 @@ export default function OrdersPage() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-white font-sans">
-      <nav className="border-b border-gray-100 px-4 sm:px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="text-lg font-bold text-gray-700 tracking-widest">Mock•Kicks</Link>
-        <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Continue Shopping</Link>
-      </nav>
-
+    <div>
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">My Orders</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">{t('orderHistory')}</h1>
 
         {orders.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
-            <p className="text-lg">No orders yet.</p>
-            <Link href="/" className="inline-block mt-4 text-sm font-semibold text-white bg-gray-900 px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors">Start Shopping</Link>
+            <p className="text-lg">{t('noOrders')}</p>
+            <Link href="/" className="inline-block mt-4 text-sm font-semibold text-white bg-gray-900 px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors">{t('startShopping')}</Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
             {orders.map((order) => (
               <Link key={order.id} href={`/orders/${order.id}`} className="flex items-center justify-between py-5 hover:bg-gray-50 -mx-4 px-4 rounded-xl transition-colors">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Order #{order.id}</p>
+                  <p className="text-sm font-semibold text-gray-900">{t('orderId')}{order.id}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{new Date(order.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="text-right">
@@ -64,34 +61,6 @@ export default function OrdersPage() {
           </div>
         )}
       </main>
-
-      <footer className="border-t border-gray-100 bg-gray-50 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-12">
-            <div>
-              <Link href="/" className="text-xl font-bold text-gray-700 tracking-widest">Mock•Kicks</Link>
-              <p className="mt-3 text-sm text-gray-400 leading-relaxed">Premium sneakers for every stride. Built for comfort, designed for life.</p>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Navigate</h4>
-              <div className="mt-4 flex flex-col gap-2.5">
-                <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Home</Link>
-                <Link href="/" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Shop</Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Account</h4>
-              <div className="mt-4 flex flex-col gap-2.5">
-                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Sign In</Link>
-                <Link href="/orders" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">My Orders</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 py-6">
-          <p className="text-xs text-gray-400 text-center max-w-md mx-auto leading-relaxed">This is a mock e-commerce site project meant for experimental and learning only.</p>
-        </div>
-      </footer>
     </div>
   )
 }

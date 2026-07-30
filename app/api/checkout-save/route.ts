@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { readCSV, insert, update, remove, nextId } from '@/lib/csv'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+
+async function resolvePaymentMethod(paymentIntentId: string): Promise<{ pmt: string; wt?: string }> {
+  try {
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId, { expand: ['payment_method'] })
+    const pm = pi.payment_method
+    if (pm && typeof pm === 'object') {
+      if (pm.type === 'card' && pm.card?.wallet?.type) {
+        const wt = pm.card.wallet.type === 'apple_pay' ? 'apple_pay' : 'google_pay'
+        return { pmt: wt, wt }
+      }
+      return { pmt: pm.type }
+    }
+  } catch {}
+  return { pmt: 'card' }
+}
 
 export async function POST(req: NextRequest) {
   const data = await req.json()
@@ -39,7 +57,12 @@ export async function POST(req: NextRequest) {
     let total = 0
     for (const item of orderData.items) total += Number(item.price) * Number(item.quantity)
 
-    const paymentMethod = data.wallet_type || data.payment_method_type || 'card'
+    let paymentMethod = data.wallet_type || data.payment_method_type || 'card'
+    const piId = data.payment_intent_id || p.payment_intent_id
+    if ((!data.wallet_type && !data.payment_method_type) && piId) {
+      const resolved = await resolvePaymentMethod(piId)
+      paymentMethod = resolved.wt || resolved.pmt
+    }
     const orderId = await nextId('orders')
     const now = new Date().toISOString()
 
@@ -69,7 +92,7 @@ export async function POST(req: NextRequest) {
       await sendOrderNotification(orderId, orderData.name, orderData.email, orderData.phone, orderData.address, orderData.city, orderData.state, orderData.postal_code, orderData.country, total, paymentMethod, orderData.items)
     } catch (e) { console.error('Order notification failed:', e) }
 
-    return NextResponse.json({ message: 'Order placed successfully.', order_id: orderId })
+    return NextResponse.json({ message: 'Order placed successfully.', order_id: orderId, total, payment_method: paymentMethod, items: orderData.items })
   }
 
   return NextResponse.json({ error: 'Unknown action.' }, { status: 400 })

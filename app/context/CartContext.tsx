@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import { useLang } from './LanguageContext'
 
 interface CartItem {
   id: number
@@ -31,6 +32,7 @@ let fetchReqId = 0
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { lang } = useLang()
   const [items, setItems] = useState<CartItem[]>([])
   const [ready, setReady] = useState(false)
 
@@ -38,13 +40,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!user) { setItems([]); setReady(true); return }
     const id = Date.now()
     fetchReqId = id
-    fetch(`/api/cart?user_id=${user.id}`, { cache: 'no-store' })
+    fetch(`/api/cart?user_id=${user.id}&lang=${lang}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((data) => { if (Array.isArray(data) && id === fetchReqId) { setItems(data); setReady(true) } })
       .catch(() => { setReady(true) })
   }
 
-  useEffect(() => { fetchCart() }, [user?.id])
+  useEffect(() => { fetchCart() }, [user?.id, lang])
 
   const count = items.reduce((s, i) => s + i.quantity, 0)
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
