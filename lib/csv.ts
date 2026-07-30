@@ -1,6 +1,29 @@
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 
-const USE_KV = !!process.env.KV_URL
+const USE_KV = !!(
+  process.env.KV_REST_API_URL
+  || process.env.UPSTASH_REDIS_REST_URL
+  || (process.env.KV_URL && process.env.KV_TOKEN)
+)
+
+function createRedis(): Redis | null {
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+    return new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN })
+  }
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL, token: process.env.UPSTASH_REDIS_REST_TOKEN })
+  }
+  if (process.env.KV_URL && process.env.KV_TOKEN) {
+    return new Redis({ url: process.env.KV_URL, token: process.env.KV_TOKEN })
+  }
+  return null
+}
+
+let kv: Redis | null = null
+function getRedis(): Redis {
+  if (!kv) kv = createRedis()
+  return kv!
+}
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = []
@@ -40,7 +63,8 @@ function counterKey(table: string): string {
 }
 
 async function seedFromCSVIfNeeded<T extends Record<string, string>>(table: string): Promise<T[]> {
-  const existing = await kv.get<T[]>(tableKey(table))
+  const r = getRedis()
+  const existing = await r.get<T[]>(tableKey(table))
   if (existing) return existing
 
   try {
@@ -58,10 +82,10 @@ async function seedFromCSVIfNeeded<T extends Record<string, string>>(table: stri
         headers.forEach((h, i) => { row[h] = values[i] || '' })
         return row as T
       })
-      await kv.set(tableKey(table), rows)
+      await r.set(tableKey(table), rows)
 
       const maxId = rows.reduce((max, r: any) => Math.max(max, Number(r.id) || 0), 0)
-      if (maxId > 0) await kv.set(counterKey(table), maxId)
+      if (maxId > 0) await r.set(counterKey(table), maxId)
 
       return rows
     }
@@ -92,7 +116,7 @@ export async function readCSV<T extends Record<string, string>>(table: string): 
 
 async function writeCSV<T extends Record<string, string>>(table: string, rows: T[]): Promise<void> {
   if (USE_KV) {
-    await kv.set(tableKey(table), rows)
+    await getRedis().set(tableKey(table), rows)
     return
   }
 
@@ -112,7 +136,7 @@ async function writeCSV<T extends Record<string, string>>(table: string, rows: T
 
 export async function nextId(table: string): Promise<number> {
   if (USE_KV) {
-    return await kv.incr(counterKey(table))
+    return await getRedis().incr(counterKey(table))
   }
 
   const fs = await import('fs')
