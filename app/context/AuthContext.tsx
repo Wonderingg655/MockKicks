@@ -1,47 +1,55 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-
-interface User {
-  id: number
-  username: string
-  email: string
-  role: number
-}
+import {
+  authenticate,
+  registerUser,
+  getSession,
+  setSession,
+  type PublicUser,
+} from '../../lib/store'
 
 interface AuthContextType {
-  user: User | null
+  user: PublicUser | null
   loading: boolean
-  login: (user: User) => void
+  login: (username: string, password: string) => { error?: string }
+  register: (username: string, email: string, password: string) => { error?: string }
   logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<PublicUser | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      try { setUser(JSON.parse(stored)) } catch { localStorage.removeItem('user') }
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- session can only be read after mount (localStorage)
+    setUser(getSession())
     setLoading(false)
   }, [])
 
-  const login = (user: User) => {
-    setUser(user)
-    localStorage.setItem('user', JSON.stringify(user))
+  const login = (username: string, password: string) => {
+    const result = authenticate(username, password)
+    if (result.user) {
+      setSession(result.user)
+      setUser(result.user)
+    }
+    return result.error ? { error: result.error } : {}
+  }
+
+  const register = (username: string, email: string, password: string) => {
+    const result = registerUser(username, email, password)
+    return result.error ? { error: result.error } : {}
   }
 
   const logout = () => {
+    setSession(null)
     setUser(null)
-    localStorage.removeItem('user')
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )

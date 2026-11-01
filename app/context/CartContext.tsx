@@ -1,18 +1,16 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
-import { useLang } from './LanguageContext'
-
-interface CartItem {
-  id: number
-  sneaker_id: number
-  quantity: number
-  name: string
-  price: number
-  image: string
-  category: string
-}
+import {
+  getCart,
+  addCartItem,
+  updateCartQuantity,
+  removeCartItem,
+  clearCart as clearStoredCart,
+  subscribeStore,
+  type CartItem,
+} from '../../lib/store'
 
 interface CartContextType {
   items: CartItem[]
@@ -20,81 +18,69 @@ interface CartContextType {
   total: number
   ready: boolean
   refreshCart: () => void
-  addToCart: (sneakerId: number) => Promise<void>
-  updateQuantity: (cartId: number, quantity: number) => Promise<void>
-  removeFromCart: (cartId: number) => Promise<void>
-  clearCart: () => Promise<void>
+  addToCart: (sneakerId: number) => void
+  updateQuantity: (cartId: number, quantity: number) => void
+  removeFromCart: (cartId: number) => void
+  clearCart: () => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-let fetchReqId = 0
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const { lang } = useLang()
   const [items, setItems] = useState<CartItem[]>([])
   const [ready, setReady] = useState(false)
 
-  const fetchCart = () => {
-    if (!user) { setItems([]); setReady(true); return }
-    const id = Date.now()
-    fetchReqId = id
-    fetch(`/api/cart?user_id=${user.id}&lang=${lang}`, { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data) && id === fetchReqId) { setItems(data); setReady(true) } })
-      .catch(() => { setReady(true) })
-  }
+  const refreshCart = useCallback(() => {
+    if (!user) {
+      setItems([])
+      setReady(true)
+      return
+    }
+    setItems(getCart(user.id))
+    setReady(true)
+  }, [user])
 
-  useEffect(() => { fetchCart() }, [user?.id, lang])
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- cart can only be read after mount (localStorage)
+    refreshCart()
+  }, [refreshCart])
 
-  const count = items.reduce((s, i) => s + i.quantity, 0)
-  const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  useEffect(() => subscribeStore(refreshCart), [refreshCart])
 
-  const addToCart = async (sneakerId: number) => {
+  const count = items.reduce((sum, item) => sum + item.quantity, 0)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  const addToCart = (sneakerId: number) => {
     if (!user) return
-    try {
-      await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, sneaker_id: sneakerId }),
-        cache: 'no-store',
-      })
-    } catch {}
-    fetchCart()
+    addCartItem(user.id, sneakerId)
+    refreshCart()
   }
 
-  const updateQuantity = async (cartId: number, quantity: number) => {
-    try {
-      await fetch('/api/cart', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: cartId, quantity }),
-        cache: 'no-store',
-      })
-    } catch {}
-    fetchCart()
+  const updateQuantity = (cartId: number, quantity: number) => {
+    if (!user) return
+    updateCartQuantity(user.id, cartId, quantity)
+    refreshCart()
   }
 
-  const removeFromCart = async (cartId: number) => {
-    try {
-      await fetch(`/api/cart?id=${cartId}`, { method: 'DELETE', cache: 'no-store' })
-    } catch {}
-    fetchCart()
+  const removeFromCart = (cartId: number) => {
+    if (!user) return
+    removeCartItem(user.id, cartId)
+    refreshCart()
   }
 
-  const clearCart = async () => {
-    fetchReqId = Date.now()
+  const clearCart = () => {
     setItems([])
     setReady(true)
     if (!user) return
-    try {
-      await fetch(`/api/cart?user_id=${user.id}&clear=1`, { method: 'DELETE', cache: 'no-store' })
-    } catch {}
+    clearStoredCart(user.id)
+    refreshCart()
   }
 
   return (
-    <CartContext.Provider value={{ items, count, total, ready, refreshCart: fetchCart, addToCart, updateQuantity, removeFromCart, clearCart }}>
+    <CartContext.Provider
+      value={{ items, count, total, ready, refreshCart, addToCart, updateQuantity, removeFromCart, clearCart }}
+    >
       {children}
     </CartContext.Provider>
   )
