@@ -7,7 +7,7 @@ import {
   getSession,
   setSession,
   type PublicUser,
-} from '../../lib/store'
+} from '@/lib/store'
 
 interface AuthContextType {
   user: PublicUser | null

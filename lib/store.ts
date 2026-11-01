@@ -1,8 +1,21 @@
 // Client-side mock data store.
-// Everything is persisted in localStorage, so the app can be deployed as a
-// static / serverless Next.js app (e.g. Vercel) without a database.
+// Products are hardcoded and users/carts/orders are persisted in localStorage,
+// so the app can be deployed to Vercel without a database or payment provider.
+
+export type Lang = 'th' | 'en'
 
 export interface Product {
+  id: number
+  name: string
+  price: number
+  image: string
+  description: string
+  category: string
+  descriptionTh?: string
+  categoryTh?: string
+}
+
+export interface LocalizedProduct {
   id: number
   name: string
   price: number
@@ -66,30 +79,78 @@ const STORE_EVENT = 'mock-kicks:store'
 
 const KEYS = {
   users: 'mk_users',
-  session: 'mk_session',
+  session: 'user',
   products: 'mk_products',
   orders: 'mk_orders',
   cart: (userId: number) => `mk_cart_${userId}`,
 }
 
 const SEED_PRODUCTS: Product[] = [
-  { id: 1, name: 'Air Max Pulse', price: 4590, image: '/sneakplaceholder.png', description: 'Premium comfort meets street-ready style with responsive cushioning and a sleek mesh upper.', category: 'Running, Lifestyle' },
-  { id: 2, name: 'Court Vision Lo', price: 3290, image: '/sneakplaceholder.png', description: 'A classic court shoe reimagined with modern materials, padded collar, and timeless appeal.', category: 'Lifestyle' },
-  { id: 3, name: 'Zoom Rival Fly', price: 3890, image: '/sneakplaceholder.png', description: 'Lightweight speed for race day. Breathable upper with Zoom Air units for explosive takeoffs.', category: 'Running' },
-  { id: 4, name: 'Revolution 7', price: 2790, image: '/sneakplaceholder.png', description: 'Everyday running made softer with plush cushioning and a smooth, comfortable ride.', category: 'Running' },
-  { id: 5, name: "Air Force 1 '07", price: 3990, image: '/sneakplaceholder.png', description: 'The legend lives on. Iconic style, premium leather, and durable construction since 1982.', category: 'Lifestyle' },
-  { id: 6, name: 'Dunk Low Retro', price: 3590, image: '/sneakplaceholder.png', description: 'Bold colors meet heritage design. A streetwear icon reissued for a new generation.', category: 'Lifestyle' },
-  { id: 7, name: 'Vaporfly 3', price: 7590, image: '/sneakplaceholder.png', description: 'Elite marathon speed with carbon fiber plate and ZoomX foam for record-breaking performance.', category: 'Running, Training' },
-  { id: 8, name: 'Metcon 9', price: 4190, image: '/sneakplaceholder.png', description: 'Built for the toughest workouts. Stability, durability, and grip for every rep.', category: 'Training' },
-  { id: 9, name: 'Pegasus Plus', price: 4990, image: '/sneakplaceholder.png', description: 'Responsive cushioning meets reliable traction for your daily training runs.', category: 'Running' },
-  { id: 10, name: 'Challenger AT', price: 3490, image: '/sneakplaceholder.png', description: 'Trail-ready with aggressive tread and protective upper for off-road adventures.', category: 'Trail, Running' },
-  { id: 11, name: 'Free Run 5.0', price: 3190, image: '/sneakplaceholder.png', description: 'Natural motion with a flexible sole and minimalist design for a barefoot-like feel.', category: 'Running, Training' },
-  { id: 12, name: 'Retro Gato', price: 2790, image: '/sneakplaceholder.png', description: 'Vintage court style with a modern twist. Premium suede and clean lines.', category: 'Lifestyle' },
+  {
+    id: 1,
+    name: 'Air Max Pulse',
+    price: 45,
+    image: '/sneakplaceholder.png',
+    description: 'Bold design meets everyday comfort in the Air Max Pulse.',
+    category: 'Running, Lifestyle',
+    descriptionTh: 'ดีไซน์โดดเด่นผสานความสบายในทุกวัน',
+    categoryTh: 'วิ่ง, ไลฟ์สไตล์',
+  },
+  {
+    id: 2,
+    name: 'Cloud Runner Pro',
+    price: 52,
+    image: '/sneakplaceholder.png',
+    description: 'Lightweight running shoes with responsive cushioning.',
+    category: 'Running',
+    descriptionTh: 'รองเท้าวิ่งน้ำหนักเบาพร้อมรองรับแรงกระแทก',
+    categoryTh: 'วิ่ง',
+  },
+  {
+    id: 3,
+    name: 'Street Glide',
+    price: 38,
+    image: '/sneakplaceholder.png',
+    description: 'Sleek lifestyle sneakers for the urban explorer.',
+    category: 'Lifestyle',
+    descriptionTh: 'รองเท้าสไตล์สบายสำหรับคนเมือง',
+    categoryTh: 'ไลฟ์สไตล์',
+  },
+  {
+    id: 4,
+    name: 'Trail Blazer',
+    price: 61,
+    image: '/sneakplaceholder.png',
+    description: 'Rugged trail shoes built for off-road adventures.',
+    category: 'Trail',
+    descriptionTh: 'รองเท้าเส้นทางทรหดสำหรับการผจญภัยนอกเส้นทาง',
+    categoryTh: 'เทรล',
+  },
+  {
+    id: 5,
+    name: 'Flex Training',
+    price: 34,
+    image: '/sneakplaceholder.png',
+    description: 'Versatile training shoes with maximum flexibility.',
+    category: 'Training',
+    descriptionTh: 'รองเท้าเทรนนิ่งอเนกประสงค์ที่ยืดหยุ่นสูงสุด',
+    categoryTh: 'เทรนนิ่ง',
+  },
+  {
+    id: 6,
+    name: 'Urban Stride',
+    price: 42,
+    image: '/sneakplaceholder.png',
+    description: 'Everyday sneakers with premium comfort and style.',
+    category: 'Lifestyle',
+    descriptionTh: 'รองเท้าผ้าใบสำหรับทุกวันด้วยความสบายระดับพรีเมียม',
+    categoryTh: 'ไลฟ์สไตล์',
+  },
 ]
 
 const SEED_USERS: User[] = [
-  { id: 1, username: 'admin', email: 'admin@mockkicks.test', password: 'admin123', role: 1, created_at: new Date().toISOString() },
-  { id: 2, username: 'demo', email: 'demo@mockkicks.test', password: 'demo123', role: 0, created_at: new Date().toISOString() },
+  { id: 1, username: 'admin', email: 'admin@mockkicks.test', password: 'admin123', role: 1, created_at: '2026-01-01T00:00:00.000Z' },
+  { id: 2, username: 'demo', email: 'demo@mockkicks.test', password: 'demo123', role: 0, created_at: '2026-01-01T00:00:00.000Z' },
 ]
 
 function hasStorage(): boolean {
@@ -150,6 +211,21 @@ export function getProducts(): Product[] {
     return SEED_PRODUCTS
   }
   return stored
+}
+
+export function localizeProduct(product: Product, lang: Lang): LocalizedProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    image: product.image,
+    description: (lang === 'th' && product.descriptionTh) || product.description,
+    category: (lang === 'th' && product.categoryTh) || product.category,
+  }
+}
+
+export function getLocalizedProducts(lang: Lang): LocalizedProduct[] {
+  return getProducts().map((product) => localizeProduct(product, lang))
 }
 
 function saveProducts(products: Product[]): void {
@@ -293,11 +369,28 @@ export function setSession(user: PublicUser | null): void {
 /* Cart                                                                */
 /* ------------------------------------------------------------------ */
 
-export function getCart(userId: number): CartItem[] {
-  return read<CartItem[]>(KEYS.cart(userId), [])
+export function getCart(userId: number, lang: Lang = 'en'): CartItem[] {
+  const stored = read<Array<Omit<CartItem, 'name' | 'category'> & { name?: string; category?: string }>>(
+    KEYS.cart(userId),
+    []
+  )
+  const products = getProducts()
+  return stored.map((item) => {
+    const product = products.find((p) => p.id === item.sneaker_id)
+    const localized = product ? localizeProduct(product, lang) : null
+    return {
+      id: item.id,
+      sneaker_id: item.sneaker_id,
+      quantity: item.quantity,
+      price: localized?.price ?? item.price,
+      image: localized?.image ?? item.image,
+      name: localized?.name ?? item.name ?? '',
+      category: localized?.category ?? item.category ?? '',
+    }
+  })
 }
 
-function saveCart(userId: number, items: CartItem[]): void {
+function saveCart(userId: number, items: Array<Omit<CartItem, 'name' | 'category'>>): void {
   write(KEYS.cart(userId), items)
 }
 
@@ -305,7 +398,10 @@ export function addCartItem(userId: number, productId: number): void {
   const cart = getCart(userId)
   const existing = cart.find((item) => item.sneaker_id === productId)
   if (existing) {
-    saveCart(userId, cart.map((item) => (item.id === existing.id ? { ...item, quantity: item.quantity + 1 } : item)))
+    saveCart(
+      userId,
+      cart.map((item) => (item.id === existing.id ? { id: item.id, sneaker_id: item.sneaker_id, quantity: item.quantity + 1, price: item.price, image: item.image } : item))
+    )
     return
   }
 
@@ -318,24 +414,30 @@ export function addCartItem(userId: number, productId: number): void {
       id: product.id,
       sneaker_id: product.id,
       quantity: 1,
-      name: product.name,
       price: product.price,
       image: product.image,
-      category: product.category,
     },
   ])
 }
 
 export function updateCartQuantity(userId: number, cartId: number, quantity: number): void {
+  const cart = getCart(userId)
   if (quantity <= 0) {
     removeCartItem(userId, cartId)
     return
   }
-  saveCart(userId, getCart(userId).map((item) => (item.id === cartId ? { ...item, quantity } : item)))
+  saveCart(
+    userId,
+    cart.map((item) => (item.id === cartId ? { id: item.id, sneaker_id: item.sneaker_id, quantity, price: item.price, image: item.image } : item))
+  )
 }
 
 export function removeCartItem(userId: number, cartId: number): void {
-  saveCart(userId, getCart(userId).filter((item) => item.id !== cartId))
+  const cart = getCart(userId)
+  saveCart(
+    userId,
+    cart.filter((item) => item.id !== cartId).map((item) => ({ id: item.id, sneaker_id: item.sneaker_id, quantity: item.quantity, price: item.price, image: item.image }))
+  )
 }
 
 export function clearCart(userId: number): void {

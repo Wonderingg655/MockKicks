@@ -114,6 +114,8 @@ const th = {
 
   // Checkout page
   initializingPayment: 'กำลังเริ่มต้นการชำระเงิน…',
+  mockPayment: 'ชำระเงินจำลอง',
+  mockPaymentNote: 'เดโมนีไม่มีการตัดเงินจริง การสั่งซื้อจะถูกบันทึกไว้ในเบราว์เซอร์ของคุณเท่านั้น',
 }
 
 const en = {
@@ -219,6 +221,8 @@ const en = {
   close: 'Close',
 
   initializingPayment: 'Initializing payment…',
+  mockPayment: 'Mock payment',
+  mockPaymentNote: 'This demo does not process real payments. Placing an order records it in your browser only.',
 }
 
 export type Lang = 'th' | 'en'

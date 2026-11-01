@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useAuth } from './AuthContext'
+import { useLang } from './LanguageContext'
 import {
   getCart,
   addCartItem,
@@ -10,7 +11,7 @@ import {
   clearCart as clearStoredCart,
   subscribeStore,
   type CartItem,
-} from '../../lib/store'
+} from '@/lib/store'
 
 interface CartContextType {
   items: CartItem[]
@@ -18,16 +19,17 @@ interface CartContextType {
   total: number
   ready: boolean
   refreshCart: () => void
-  addToCart: (sneakerId: number) => void
-  updateQuantity: (cartId: number, quantity: number) => void
-  removeFromCart: (cartId: number) => void
-  clearCart: () => void
+  addToCart: (sneakerId: number) => Promise<void>
+  updateQuantity: (cartId: number, quantity: number) => Promise<void>
+  removeFromCart: (cartId: number) => Promise<void>
+  clearCart: () => Promise<void>
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { lang } = useLang()
   const [items, setItems] = useState<CartItem[]>([])
   const [ready, setReady] = useState(false)
 
@@ -37,9 +39,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setReady(true)
       return
     }
-    setItems(getCart(user.id))
+    setItems(getCart(user.id, lang))
     setReady(true)
-  }, [user])
+  }, [user, lang])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- cart can only be read after mount (localStorage)
@@ -51,25 +53,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const count = items.reduce((sum, item) => sum + item.quantity, 0)
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
-  const addToCart = (sneakerId: number) => {
+  const addToCart = async (sneakerId: number) => {
     if (!user) return
     addCartItem(user.id, sneakerId)
     refreshCart()
   }
 
-  const updateQuantity = (cartId: number, quantity: number) => {
+  const updateQuantity = async (cartId: number, quantity: number) => {
     if (!user) return
     updateCartQuantity(user.id, cartId, quantity)
     refreshCart()
   }
 
-  const removeFromCart = (cartId: number) => {
+  const removeFromCart = async (cartId: number) => {
     if (!user) return
     removeCartItem(user.id, cartId)
     refreshCart()
   }
 
-  const clearCart = () => {
+  const clearCart = async () => {
     setItems([])
     setReady(true)
     if (!user) return

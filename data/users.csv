@@ -1,7 +1,0 @@
-id,username,email,password,role,created_at,updated_at
-1,admin,admin@mockkicks.com,$2b$10$Go4rXFSuYpPWLu.2SGvwyOHZcIPzOY8nGbUTvs53xdk1tILI9XXOu,1,2026-07-30T02:43:46.207Z,2026-07-30T02:43:46.207Z
-2,john1,john@example.com,$2b$10$3V7z2OxpVle8gc5jmK3Jp.vgB35jyBdsf3qaYRtaCpHf55p8lVIMO,0,2026-07-30T02:43:46.207Z,2026-07-30T02:43:46.207Z
-3,jane,jane@example.com,$2b$10$3V7z2OxpVle8gc5jmK3Jp.vgB35jyBdsf3qaYRtaCpHf55p8lVIMO,0,2026-07-30T02:43:46.207Z,2026-07-30T02:43:46.207Z
-4,bob,bob@example.com,$2b$10$3V7z2OxpVle8gc5jmK3Jp.vgB35jyBdsf3qaYRtaCpHf55p8lVIMO,0,2026-07-30T02:43:46.207Z,2026-07-30T02:43:46.207Z
-5,alice,alice@example.com,$2b$10$3V7z2OxpVle8gc5jmK3Jp.vgB35jyBdsf3qaYRtaCpHf55p8lVIMO,0,2026-07-30T02:43:46.207Z,2026-07-30T02:43:46.207Z
-6,Jimmy,Jimmy@gmail.com,$2b$10$7MtCyCP2G69rWvIreGB7XuX3ehSyuXkKrjNJbLf/ApWySdYg9meUK,0,2026-07-30T02:54:12.199Z,2026-07-30T02:54:12.199Z

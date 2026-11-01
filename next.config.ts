@@ -1,14 +1,14 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
-// Turbopack resolves modules relative to its workspace root. Use the directory
-// that contains next.config.ts when available, otherwise fall back to cwd.
-const projectRoot =
-  typeof __dirname === "string" ? __dirname : path.resolve(process.cwd());
-
 const nextConfig: NextConfig = {
+  // Pin Turbopack's workspace root to this project so nested folders and
+  // lockfiles higher up the tree cannot confuse module resolution.
   turbopack: {
-    root: projectRoot,
+    root: path.resolve(process.cwd()),
+  },
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
   },
 };
 
